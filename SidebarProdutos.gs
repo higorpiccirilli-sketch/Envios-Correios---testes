@@ -99,20 +99,20 @@ function preencherColunaComProdutos(itens) {
     return;
   }
 
-  // Monta a string no formato: "Produto A + Produto A + Produto B"
-  let stringParaPreencher = '';
+  // Em vez de repetir o nome N vezes, vamos montar no formato:
+  // "Produto A x2; Produto B x1; Produto C x3"
+  const partes = [];
 
   itens.forEach(item => {
     const produto = item.produto;
     const quantidade = Number(item.quantidade) || 0;
 
-    for (let j = 0; j < quantidade; j++) {
-      if (stringParaPreencher.length > 0) {
-        stringParaPreencher += ' + ';
-      }
-      stringParaPreencher += produto;
-    }
+    if (!produto || quantidade <= 0) return;
+
+    partes.push(`${produto} x${quantidade}`);
   });
+
+  const stringParaPreencher = partes.join('; ');
 
   const celulaDestino = abaAtiva.getRange(linhaAtiva, CONFIG.COLUNA_DESTINO_COMPOSICAO);
 
@@ -127,6 +127,8 @@ function preencherColunaComProdutos(itens) {
     ui.alert('Nenhum produto válido foi informado. A célula foi limpa.');
   }
 }
+
+
 
 /**
  * Helper para incluir arquivos HTML no Apps Script.
