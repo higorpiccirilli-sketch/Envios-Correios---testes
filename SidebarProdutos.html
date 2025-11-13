@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top">
+    <meta charset="UTF-8">
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        padding: 10px;
+      }
+      h2 {
+        font-size: 16px;
+        margin-bottom: 10px;
+      }
+      label, select, input {
+        width: 100%;
+        box-sizing: border-box;
+        margin-bottom: 8px;
+      }
+      button {
+        width: 100%;
+        padding: 8px;
+        margin-top: 6px;
+        cursor: pointer;
+      }
+      .lista-itens {
+        margin-top: 10px;
+        max-height: 150px;
+        overflow-y: auto;
+        border: 1px solid #ccc;
+        padding: 5px;
+        font-size: 12px;
+      }
+      .item-linha {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 4px;
+      }
+      .item-linha span {
+        display: inline-block;
+      }
+    </style>
+  </head>
+  <body>
+    <h2>Selecionar Produtos</h2>
+
+    <!-- Select com os produtos vindos do Apps Script -->
+    <label for="produtoSelect">Produto:</label>
+    <select id="produtoSelect">
+      <? for (var i = 0; i < produtos.length; i++) { ?>
+        <option value="<?= produtos[i] ?>"><?= produtos[i] ?></option>
+      <? } ?>
+    </select>
+
+    <label for="quantidadeInput">Quantidade:</label>
+    <input id="quantidadeInput" type="number" min="1" value="1">
+
+    <button onclick="adicionarItem()">Adicionar à lista</button>
+
+    <div class="lista-itens" id="listaItens">
+      <!-- Itens adicionados aparecem aqui -->
+    </div>
+
+    <button onclick="enviarParaPlanilha()">Preencher célula na coluna E</button>
+
+    <script>
+      // Array local para guardar { produto, quantidade }
+      let itensSelecionados = [];
+
+      function adicionarItem() {
+        const select = document.getElementById('produtoSelect');
+        const inputQtd = document.getElementById('quantidadeInput');
+
+        const produto = select.value;
+        const quantidade = parseInt(inputQtd.value, 10);
+
+        if (!produto) {
+          alert('Selecione um produto.');
+          return;
+        }
+
+        if (!quantidade || quantidade <= 0) {
+          alert('Informe uma quantidade válida (>= 1).');
+          return;
+        }
+
+        itensSelecionados.push({ produto: produto, quantidade: quantidade });
+        renderizarLista();
+      }
+
+      function renderizarLista() {
+        const container = document.getElementById('listaItens');
+        container.innerHTML = '';
+
+        if (itensSelecionados.length === 0) {
+          container.textContent = 'Nenhum item na lista.';
+          return;
+        }
+
+        itensSelecionados.forEach((item, index) => {
+          const div = document.createElement('div');
+          div.className = 'item-linha';
+
+          const spanTexto = document.createElement('span');
+          spanTexto.textContent = item.produto + ' x ' + item.quantidade;
+
+          const spanRemover = document.createElement('span');
+          spanRemover.style.cursor = 'pointer';
+          spanRemover.style.color = 'red';
+          spanRemover.textContent = '✕';
+          spanRemover.onclick = function () {
+            itensSelecionados.splice(index, 1);
+            renderizarLista();
+          };
+
+          div.appendChild(spanTexto);
+          div.appendChild(spanRemover);
+          container.appendChild(div);
+        });
+      }
+
+      function enviarParaPlanilha() {
+        if (itensSelecionados.length === 0) {
+          alert('Adicione pelo menos um item antes de enviar.');
+          return;
+        }
+
+        google.script.run
+          .withSuccessHandler(() => {
+            // Se quiser, pode limpar a lista após preencher:
+            // itensSelecionados = [];
+            // renderizarLista();
+          })
+          .preencherColunaComProdutos(itensSelecionados);
+      }
+
+      // Render inicial
+      renderizarLista();
+    </script>
+  </body>
+</html>
